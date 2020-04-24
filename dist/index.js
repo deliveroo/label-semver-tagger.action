@@ -645,6 +645,7 @@ async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName.startsWith('./')) {
     const file = bumpScriptName.slice(2)
     bumpScriptName = path.basename(file)
+    core.debug(`Downloading bump script from repo: ${file}`)
     const src = await fileActions.readFile(file)
 
     if (src === null) {
@@ -654,6 +655,7 @@ async function findBumpScript(bumpScriptName, fileActions) {
     fs.writeFileSync(`./bump-scripts/${bumpScriptName}`, src)
   }
 
+  core.debug(`Loading bump script: ${bumpScriptName}`)
   return __webpack_require__(79)(fileActions)
 }
 
