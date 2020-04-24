@@ -500,12 +500,14 @@ const fs = __webpack_require__(747)
 const path = __webpack_require__(622)
 const core = __webpack_require__(470);
 const github = __webpack_require__(469);
-const inbuiltBumpScripts = {
-  goCobra: __webpack_require__(602),
-  versionFile: __webpack_require__(188),
-}
 
-run().catch(error => { core.setFailed(error.message) })
+const inbuiltBumpScripts = {
+  versionFile: __webpack_require__(188),
+  goCobra: __webpack_require__(602),
+}
+const defaultBumpScript = inbuiltBumpScripts.versionFile
+
+run().catch(error => { core.setFailed(`${error.message} (${error.lineNumber})`) })
 
 async function run() {
   const octokit = new github.GitHub(core.getInput('repo-token'))
@@ -572,8 +574,10 @@ function reFromGlobstring(glob) {
 }
 
 async function findBumpScript(bumpScriptName, fileActions) {
+  core.debug(`File actions: ${Object.keys(fileActions).join(", ")}`)
+  core.debug(`File action values: ${Object.values(fileActions).join(", ")}`)
   if (bumpScriptName === "") {
-    bumpScriptName = 'singleVersionFile'
+    return defaultBumpScript(fileActions)
   }
 
   if (!inbuiltBumpScripts.hasOwnProperty(bumpScriptName)) {
