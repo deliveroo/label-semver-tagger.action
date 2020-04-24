@@ -1,0 +1,35 @@
+name: Label Tagger
+description: Add git tags to the repository based on the labels which were applied to the PR that was just merged.
+inputs:
+  repo-token:
+    description: The GITHUB_TOKEN secret
+    required: true
+  new-component-label:
+    description: The label that indicates a new component has been added.
+    default: new component
+    required: false
+  component-globs:
+    description: The comma separated file glob(s) to the names of the components. eg. `cmd/*`. An empty string implies the non-component build exists.
+    default: ""
+    required: false
+  bump-script:
+    description: The JS script that will be used to bump versions. Updates `/VERSION` if empty.
+    default: versionFile
+    required: false
+  bump-label-format:
+    description: The structure of the labels that hold the bumpType and (optionally) the component name.
+    default: ${bumpType}
+    required: false
+  tag-format:
+    description: The format of the git tag(s) that are applied.
+    default: v${version}
+    required: false
+outputs:
+  bumped:
+    description: A map of component to the new version number.
+branding:
+  icon: tag
+  color: purple
+runs:
+  using: node12
+  main: dist/index.js

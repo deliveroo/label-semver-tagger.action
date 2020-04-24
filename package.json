@@ -1,0 +1,29 @@
+{
+  "name": "label-server-tagger.action",
+  "version": "1.0.0",
+  "description": "A Github action that bumps SemVers of your repo/components in your repo and adds lightweight tags to the update commit",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint index.js",
+    "package": "ncc build index.js -o dist",
+    "test": "eslint index.js && jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deliveroo/label-semver-tagger.action.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/deliveroo/label-semver-tagger.action/issues"
+  },
+  "homepage": "https://github.com/deliveroo/label-semver-tagger.action#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.3",
+    "@actions/github": "^2.1.1"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.20.5",
+    "eslint": "^6.3.0",
+    "jest": "^24.9.0"
+  }
+}
