@@ -4,7 +4,7 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 const inbuiltBumpScripts = {
   goCobra: require('./bump-scripts/goCobra'),
-  singleVersionFile: require('./bump-scripts/singleVersionFile'),
+  versionFile: require('./bump-scripts/versionFile'),
 }
 
 run().catch(error => { core.setFailed(error.message) })
