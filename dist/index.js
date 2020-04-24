@@ -621,6 +621,7 @@ async function getRepoArgs(octokit, pr) {
     }
   }
 
+  core.debug(`Working with ${repoArgs.owner}/${repoArgs.repo} at ${repoArgs.ref}`)
   return repoArgs
 }
 
@@ -637,6 +638,7 @@ async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName === "") {
     bumpScriptName = 'singleVersionFile'
   }
+  core.debug(`Using bump script: ${bumpScriptName}`)
 
   if (path.basename(process.cwd()) == 'dist') {
     process.chdir('..')
@@ -652,6 +654,7 @@ async function findBumpScript(bumpScriptName, fileActions) {
       throw new Error(`no script called '${file}' in your repo`)
     }
 
+    core.debug(`Writing downloaded bump script to: ${bumpScriptName}`)
     fs.writeFileSync(`./bump-scripts/${bumpScriptName}`, src)
   }
 
