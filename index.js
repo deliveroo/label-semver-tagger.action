@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 const core = require('@actions/core');
 const github = require('@actions/github');
 
@@ -85,17 +87,15 @@ async function findBumpScript(bumpScriptName, fileActions) {
   }
 
   if (bumpScriptName.startsWith('./')) {
-    const path = bumpScriptName.slice(2)
-    const src = await fileActions.readFile(path)
+    const file = bumpScriptName.slice(2)
+    bumpScriptName = path.basename(file)
+    const src = await fileActions.readFile(file)
 
     if (src === null) {
-      throw new Error(`no script called '${path}' in your repo`)
+      throw new Error(`no script called '${file}' in your repo`)
     }
 
-    const Module = module.constructor
-    const m = new Module()
-    m._compile(src, path)
-    return m.exports(fileActions)
+    fs.writeFileSync(`./bump-scripts/${bumpScriptName}`, src)
   }
 
   return require(`./bump-scripts/${bumpScriptName}`)(fileActions)
@@ -179,15 +179,15 @@ function getRepoAccessor(octokit, repoArgs) {
     fileActions: {},
   }
 
-  const getFile = async (path) => {
-    if (accessor.cache.hasOwnProperty(path)) {
-      return accessor.cache[path]
+  const getFile = async (filePath) => {
+    if (accessor.cache.hasOwnProperty(filePath)) {
+      return accessor.cache[filePath]
     }
 
-    return octokit.repos.getContents({...repoArgs, path})
+    return octokit.repos.getContents({...repoArgs, filePath})
       .then(result => Buffer.from(result.data.content, 'base64').toString())
       .catch(e => null)
-      .then(data => accessor.cache[path] = data)
+      .then(data => accessor.cache[filePath] = data)
   }
 
   accessor.fileActions.readFile = getFile
@@ -241,7 +241,7 @@ async function newComponentsFromPR(octokit, pr, repoArgs, bumpScript, re) {
 async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, versions, tags) {
   const type = 'blob'
   const mode = '100644' // TODO: Cappture executability -> 100755
-  const tree = Object.keys(changedFiles).map((path) => ({ type, mode, path, content: changedFiles[path] }))
+  const tree = Object.keys(changedFiles).map((filePath) => ({ type, mode, path: filePath, content: changedFiles[filePath] }))
 
   const { owner, repo, ref: baseRef } = repoArgs
 
