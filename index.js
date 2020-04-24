@@ -57,20 +57,7 @@ async function getRepoArgs(octokit, pr) {
   const repoArgs = {
     owner: pr.base.repo.owner.login,
     repo: pr.base.repo.name,
-  }
-  
-  const compare = await octokit.repos.compareCommits({
-    ...repoArgs,
-    base: pr.head.sha,
-    head: 'master',
-  })
-
-  for (const commitSincePR of compare.data.commits) {
-    const shas = commitSincePR.parents.map(c => c.sha)
-    if (shas.includes(pr.head.sha)) {
-      repoArgs.ref = commitSincePR.sha
-      break
-    }
+    ref: pr.merge_commit_sha,
   }
 
   core.debug(`Working with ${repoArgs.owner}/${repoArgs.repo} at ${repoArgs.ref}`)
@@ -207,6 +194,7 @@ function tagsFromVersions(tagFormat, versions) {
     tags.push(tagFormat({ component, version }))
   }
 
+  core.debug(`Will be tagged with: ${tags.join(', ')}`)
   return tags
 }
 
@@ -248,6 +236,7 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
   const { owner, repo, ref: baseRef } = repoArgs
 
   const changeTree = await octokit.git.createTree({owner, repo, base_tree: baseRef, tree})
+  const treeSha = changeTree.data.sha
 
   let message = `Bumping versions from #${prNumber}\n\nThese are the new version numbers:\n`
   for (let component in versions) {
@@ -258,8 +247,10 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
     message += `- ${component}: ${versions[component]}\n`
   }
 
-  const commit = await octokit.git.createCommit({ owner, repo, message, tree: changeTree.data.sha, parents: [baseRef]})
+  core.debug(`Creating commit of tree (${treeSha}) atop master (${baseRef})`)
+  const commit = await octokit.git.createCommit({ owner, repo, message, tree: treeSha, parents: [baseRef]})
   const newSha = commit.data.sha
+  core.debug(`New commit with version bumps: ${newSha}`)
 
   const jobs = []
   for (const tag of tags) {
@@ -267,7 +258,7 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
     jobs.push(job)
   }
   await Promise.all(jobs)
+  core.debug('Tags added to commit, updaing master ref')
 
   return octokit.git.updateRef({owner, repo, ref: 'heads/master', sha: newSha})
-  throw 'nope'
 }
