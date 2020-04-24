@@ -2,8 +2,12 @@ const fs = require('fs')
 const path = require('path')
 const core = require('@actions/core');
 const github = require('@actions/github');
+const inbuiltBumpScripts = {
+  goCobra: require('./bump-scripts/goCobra'),
+  singleVersionFile: require('./bump-scripts/singleVersionFile'),
+}
 
-run().catch(error => { core.setFailed(error.message); throw error })
+run().catch(error => { core.setFailed(error.message) })
 
 async function run() {
   const octokit = new github.GitHub(core.getInput('repo-token'))
@@ -86,28 +90,14 @@ async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName === "") {
     bumpScriptName = 'singleVersionFile'
   }
+
+  if (!inbuiltBumpScripts.hasOwnProperty(bumpScriptName)) {
+    throw new Error(`No bump script named ${bumpScriptName}`)
+  }
+
   core.debug(`Using bump script: ${bumpScriptName}`)
-
-  if (path.basename(process.cwd()) == 'dist') {
-    process.chdir('..')
-  }
-
-  if (bumpScriptName.startsWith('./')) {
-    const file = bumpScriptName.slice(2)
-    bumpScriptName = path.basename(file)
-    core.debug(`Downloading bump script from repo: ${file}`)
-    const src = await fileActions.readFile(file)
-
-    if (src === null) {
-      throw new Error(`no script called '${file}' in your repo`)
-    }
-
-    core.debug(`Writing downloaded bump script to: ${bumpScriptName}`)
-    fs.writeFileSync(`./bump-scripts/${bumpScriptName}`, src)
-  }
-
-  core.debug(`Loading bump script: ${bumpScriptName}`)
-  return require(`./bump-scripts/${bumpScriptName}`)(fileActions)
+  const initBumpScript = inbuiltBumpScripts[bumpScriptName]
+  return initBumpScript(fileActions)
 }
 
 function parseTemplateString(template) {
@@ -193,9 +183,12 @@ function getRepoAccessor(octokit, repoArgs) {
       return accessor.cache[filePath]
     }
 
-    return octokit.repos.getContents({...repoArgs, filePath})
+    return octokit.repos.getContents({...repoArgs, path: filePath})
       .then(result => Buffer.from(result.data.content, 'base64').toString())
-      .catch(e => null)
+      .catch(e => {
+        core.debug(`File not retrievable: ${filePath} (${e.message})`)
+        return null
+      })
       .then(data => accessor.cache[filePath] = data)
   }
 

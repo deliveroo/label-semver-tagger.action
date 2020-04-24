@@ -554,8 +554,12 @@ const fs = __webpack_require__(747)
 const path = __webpack_require__(622)
 const core = __webpack_require__(470);
 const github = __webpack_require__(469);
+const inbuiltBumpScripts = {
+  goCobra: __webpack_require__(602),
+  singleVersionFile: __webpack_require__(79),
+}
 
-run().catch(error => { core.setFailed(error.message); throw error })
+run().catch(error => { core.setFailed(error.message) })
 
 async function run() {
   const octokit = new github.GitHub(core.getInput('repo-token'))
@@ -638,28 +642,14 @@ async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName === "") {
     bumpScriptName = 'singleVersionFile'
   }
+
+  if (!inbuiltBumpScripts.hasOwnProperty(bumpScriptName)) {
+    throw new Error(`No bump script named ${bumpScriptName}`)
+  }
+
   core.debug(`Using bump script: ${bumpScriptName}`)
-
-  if (path.basename(process.cwd()) == 'dist') {
-    process.chdir('..')
-  }
-
-  if (bumpScriptName.startsWith('./')) {
-    const file = bumpScriptName.slice(2)
-    bumpScriptName = path.basename(file)
-    core.debug(`Downloading bump script from repo: ${file}`)
-    const src = await fileActions.readFile(file)
-
-    if (src === null) {
-      throw new Error(`no script called '${file}' in your repo`)
-    }
-
-    core.debug(`Writing downloaded bump script to: ${bumpScriptName}`)
-    fs.writeFileSync(`./bump-scripts/${bumpScriptName}`, src)
-  }
-
-  core.debug(`Loading bump script: ${bumpScriptName}`)
-  return __webpack_require__(79)(fileActions)
+  const initBumpScript = inbuiltBumpScripts[bumpScriptName]
+  return initBumpScript(fileActions)
 }
 
 function parseTemplateString(template) {
@@ -745,9 +735,12 @@ function getRepoAccessor(octokit, repoArgs) {
       return accessor.cache[filePath]
     }
 
-    return octokit.repos.getContents({...repoArgs, filePath})
+    return octokit.repos.getContents({...repoArgs, path: filePath})
       .then(result => Buffer.from(result.data.content, 'base64').toString())
-      .catch(e => null)
+      .catch(e => {
+        core.debug(`File not retrievable: ${filePath} (${e.message})`)
+        return null
+      })
       .then(data => accessor.cache[filePath] = data)
   }
 
@@ -8717,6 +8710,71 @@ function getPageLinks (link) {
   return links
 }
 
+
+/***/ }),
+
+/***/ 602:
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+// This bump script will process incoming component bumpTypes, updating the cobra
+// config at `cmd/<component>/cmd/root.go` to bump the relevant part of the SemVer
+// stored on the `Version: "x.y.z"` line.
+// It will throw an error if a bump label without a component was merged.
+// It will throw an error if the specified component doesn't exist.
+const path = __webpack_require__(622)
+
+const versionRe = /\bVersion:\s*"((?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+))",/
+
+module.exports = ({fileExists, readFile, writeFile}) => {
+  return async (bumpType, component) => {
+    if (component === null) {
+        throw new Error('This bump script requires component names.')
+    }
+
+    const rootCmdPath = path.join('cmd', component, 'cmd', 'root.go')
+    const doesExist = await fileExists(rootCmdPath)
+    if (!doesExist) {
+      throw new Error(`There is no component named '${component}'`)
+    }
+
+    const data = await readFile(rootCmdPath)
+
+    const match = versionRe.exec(data)
+    if (match === null) {
+      throw new Error(`Version information is missing from ${rootCmdPath}`)
+    }
+
+    if (bumpType === 'none') {
+      return match[1]
+    }
+
+    let {major, minor, patch} = match.groups;
+
+    switch(bumpType) {
+      case 'major':
+        major++
+        minor = 0
+        patch = 0
+        break
+      case 'minor':
+        minor++
+        patch = 0
+        break
+      case 'patch':
+        patch++
+        break
+      default:
+        throw new Error(`Unknown bump type "${bumpType}"`)
+    }
+
+    const newVersion = `${major}.${minor}.${patch}`
+    const newData = data.replace(versionRe, (original, oldVersion) => original.replace(oldVersion, newVersion))
+
+    await writeFile(rootCmdPath, newData)
+
+    return newVersion
+  }
+}
 
 /***/ }),
 
