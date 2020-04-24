@@ -4,14 +4,6 @@ inputs:
   repo-token:
     description: The GITHUB_TOKEN secret
     required: true
-  new-component-label:
-    description: The label that indicates a new component has been added.
-    default: new component
-    required: false
-  component-globs:
-    description: The comma separated file glob(s) to the names of the components. eg. `cmd/*`. An empty string implies the non-component build exists.
-    default: ""
-    required: false
   bump-script:
     description: The JS script that will be used to bump versions. Updates `/VERSION` if empty.
     default: versionFile
@@ -23,6 +15,14 @@ inputs:
   tag-format:
     description: The format of the git tag(s) that are applied.
     default: v${version}
+    required: false
+  new-component-label:
+    description: The label that indicates a new component has been added.
+    default: new component
+    required: false
+  component-globs:
+    description: The comma separated file glob(s) to the names of the components. eg. `cmd/*`. An empty string implies the non-component build exists.
+    default: ""
     required: false
 outputs:
   bumped:

@@ -1,6 +1,10 @@
-# Label Tagger
+# Label SenVer Tagger
 
-This action can be used when PRs with labels containing semantic versioning information have been merged. It will bump the version data appropriately, commit those changes to your `master` branch, and tag them with the appropriate (optionally component-prefixed) git tag.
+This action is useful when PRs with labels containing semantic versioning information have been merged. It will bump the version data appropriately, commit those changes to your `master` branch, and tag them with the appropriate (optionally component-prefixed) git tag.
+
+The inputs for the action allow specifying how version information is stored in your repo, and what the tags should look like. The defaults are listed below in the example.
+
+## Example
 
 ```yaml
 on:
@@ -12,19 +16,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Identify version bumps and tag the repo
-        uses: deliveroo/label-semver-tagger.action@v1
+        uses: deliveroo/label-semver-tagger.action@v1.0.0
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          bump-script: versionFile
+          bump-label-format: ${bumpType}
+          tag-format: v${version}
 ```
 
-# Config
+## Inputs
 
-## `bump-script`
+### `bump-script`
 
-If `bump-script` points to an `import`able JS file, it will be called to bump (or retrieve) the version number(s) in your repo. Strings starting with `./` will be pulled from your repo, others will be looked for in the `bump-scripts` directory of this action.
+The name of one of the files in `bump-script`, scripts which define how the version file should be read and bumped in your repo. Read the comment at the top of the files to determine which one is right for you. The default, `versionFile`, holds the repo's version information in a file called `VERSION` in the root of your repo.
 
-Your script must export a function of the form `(bumpType: string, component: string | null) => (newVersion: string)`. It will be called when PRs are merged with labels that are either of the form `[component]/[bumpType]`, or `[bumpType]` (if so, the `component` argument will be `null`).
+### `bump-label-format`
 
-`bumpType` will always be one of `major`, `minor`, `patch`, or `none`. When `bumpType` is `none` then the script should only return the current version number, otherwise it should also alter the filesystem to bump the relevant part of the version number.
+How the type of bump should be interpreted from the labels on merged PRs. The default, `${bumpType}`, will look for the labels named `major`, `minor` and `patch` to bump the repository's version appropriately. If you prefix or suffix those in your repo, you can add that here.
 
-The script will be called from the root of your repo.
+### `tag-format`
+
+How the tags that will be applied to the versioning commit should be formatted. The default, `v${version}`, will create tags that look like `v1.0.0`.
+
+## Config: Components
+
+When your repo contains more than one releasable component, this action can be very useful. It provides additional options so that only the appropriate components are versioned on PRs that change them.
+
+### `bump-label-format`
+
+When bumping components this action will need a way to determine which component is being bumped. This input should now hold both a `${bumpType}` and a `${component}` template variable. A common value for this input is `${component}:${version}` which will look for labels like `supertool:major` and `supertool:patch`.
+
+### `tag-format`
+
+As above, when a component is bumped its likely you'll want that reflected in the git tag aswell. A common value for this input is `${component}/${bumpType}` which will tag your commits similarly to `supertool/1.0.0`.
+
+### `new-component-label`
+
+In a multi-component repo you may _add_ a component, and this action assists you by creating labels for your repo, and tagging with what ever version number you start with (ie. no increment) when it sees whatever label name you specify here. The default is `new component`.
