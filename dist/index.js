@@ -555,7 +555,7 @@ const path = __webpack_require__(622)
 const core = __webpack_require__(470);
 const github = __webpack_require__(469);
 
-run().catch(error => { core.setFailed(error.message) })
+run().catch(error => { core.setFailed(error.message); throw error })
 
 async function run() {
   const octokit = new github.GitHub(core.getInput('repo-token'))
@@ -636,6 +636,10 @@ function reFromGlobstring(glob) {
 async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName === "") {
     bumpScriptName = 'singleVersionFile'
+  }
+
+  if (path.basename(process.cwd()) == 'dist') {
+    process.chdir('..')
   }
 
   if (bumpScriptName.startsWith('./')) {

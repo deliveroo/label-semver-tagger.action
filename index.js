@@ -3,7 +3,7 @@ const path = require('path')
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-run().catch(error => { core.setFailed(error.message) })
+run().catch(error => { core.setFailed(error.message); throw error })
 
 async function run() {
   const octokit = new github.GitHub(core.getInput('repo-token'))
@@ -84,6 +84,10 @@ function reFromGlobstring(glob) {
 async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName === "") {
     bumpScriptName = 'singleVersionFile'
+  }
+
+  if (path.basename(process.cwd()) == 'dist') {
+    process.chdir('..')
   }
 
   if (bumpScriptName.startsWith('./')) {
