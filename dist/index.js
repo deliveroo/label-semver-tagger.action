@@ -664,7 +664,6 @@ function getRepoAccessor(octokit, repoArgs) {
   const accessor = {
     changes: {},
     cache: {},
-    fileActions: {},
   }
 
   const getFile = async (filePath) => {
@@ -681,9 +680,11 @@ function getRepoAccessor(octokit, repoArgs) {
       .then(data => accessor.cache[filePath] = data)
   }
 
-  accessor.fileActions.readFile = getFile
-  accessor.fileActions.fileExists = async (file) => (await getFile(file) !== null)
-  accessor.fileActions.writeFile = async (file, data) => { accessor.changes[file] = data }
+  accessor.fileActions = {
+    readFile: getFile,
+    fileExists: async (file) => (await getFile(file) !== null),
+    writeFile: async (file, data) => { accessor.changes[file] = data },
+  }
 
   return accessor
 }
