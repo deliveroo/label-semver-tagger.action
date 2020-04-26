@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Identify version bumps and tag the repo
-        uses: deliveroo/label-semver-tagger.action@master
+        uses: deliveroo/label-semver-tagger.action@next
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           default: versionFile
