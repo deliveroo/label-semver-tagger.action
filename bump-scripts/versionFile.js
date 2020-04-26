@@ -5,6 +5,7 @@
 // It will throw an error if the `/VERSION` file doesn't contain a valid Semantic Version
 
 const versionFile = 'VERSION'
+const core = require('@actions/core');
 
 module.exports = ({fileExists, readFile, writeFile}) => {
   return (bumpType, component) => {
@@ -23,6 +24,7 @@ module.exports = ({fileExists, readFile, writeFile}) => {
       return { "": oldVersion }
     }
 
+    core.debug(`Version is: ${oldVersion}`)
     let [major, minor, patch] = oldVersion.split(".")
     switch(bumpType) {
       case 'major':

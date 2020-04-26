@@ -2141,7 +2141,7 @@ module.exports = opts => {
 /***/ }),
 
 /***/ 188:
-/***/ (function(module) {
+/***/ (function(module, __unusedexports, __webpack_require__) {
 
 // This bump script will process the `major`, `minor`, and `patch` labels
 // updating or creating the `/VERSION` file of your repo by one point in the
@@ -2150,6 +2150,7 @@ module.exports = opts => {
 // It will throw an error if the `/VERSION` file doesn't contain a valid Semantic Version
 
 const versionFile = 'VERSION'
+const core = __webpack_require__(470);
 
 module.exports = ({fileExists, readFile, writeFile}) => {
   return (bumpType, component) => {
@@ -2168,6 +2169,7 @@ module.exports = ({fileExists, readFile, writeFile}) => {
       return { "": oldVersion }
     }
 
+    core.debug(`Version is: ${oldVersion}`)
     let [major, minor, patch] = oldVersion.split(".")
     switch(bumpType) {
       case 'major':
