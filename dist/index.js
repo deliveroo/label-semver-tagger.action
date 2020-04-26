@@ -574,8 +574,6 @@ function reFromGlobstring(glob) {
 }
 
 async function findBumpScript(bumpScriptName, fileActions) {
-  core.debug(`File actions: ${Object.keys(fileActions).join(", ")}`)
-  core.debug(`File action values: ${Object.values(fileActions).join(", ")}`)
   if (bumpScriptName === "") {
     return defaultBumpScript(fileActions)
   }
@@ -2153,7 +2151,7 @@ module.exports = opts => {
 
 const versionFile = 'VERSION'
 
-module.exports = (fileExists, readFile, writeFile) => {
+module.exports = ({fileExists, readFile, writeFile}) => {
   return (bumpType, component) => {
     if (component !== "") {
       throw 'This bump script does not work with labels containing component names.'

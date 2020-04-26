@@ -6,7 +6,7 @@
 
 const versionFile = 'VERSION'
 
-module.exports = (fileExists, readFile, writeFile) => {
+module.exports = ({fileExists, readFile, writeFile}) => {
   return (bumpType, component) => {
     if (component !== "") {
       throw 'This bump script does not work with labels containing component names.'
