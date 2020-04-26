@@ -243,11 +243,12 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
 
   let message = `Bumping versions from #${prNumber}\n\nThese are the new version numbers:\n`
   for (let component in versions) {
+    let name = component
     if (component === "") {
-      component = 'whole repository'
+      name = '(whole repository)'
     }
 
-    message += `- ${component}: ${versions[component]}\n`
+    message += `- ${name}: ${versions[component]}\n`
   }
 
   core.debug(`Creating commit of tree (${treeSha}) atop master (${baseRef})`)
@@ -258,7 +259,7 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
   const jobs = []
   for (const tag of tags) {
     core.debug(`Adding tag: ${tag}`)
-    const job = octokit.git.createRef({ owner, repo, ref: `tags/${tag}`, sha: newSha})
+    const job = octokit.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: newSha})
     jobs.push(job)
   }
   await Promise.all(jobs)
