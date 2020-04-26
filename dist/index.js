@@ -756,7 +756,7 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
   const jobs = []
   for (const tag of tags) {
     core.debug(`Adding tag: ${tag}`)
-    const job = octokit.git.createRef({ owner, repo, ref: `tags/${tag}`, sha: newSha})
+    const job = octokit.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: newSha})
     jobs.push(job)
   }
   await Promise.all(jobs)
