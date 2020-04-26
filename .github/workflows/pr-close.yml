@@ -11,5 +11,5 @@ jobs:
         uses: deliveroo/label-semver-tagger.action@next
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          default: versionFile
+          bump-script: versionFile
           tag-format: v${version}

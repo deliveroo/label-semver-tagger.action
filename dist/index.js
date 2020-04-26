@@ -500,10 +500,12 @@ const fs = __webpack_require__(747)
 const path = __webpack_require__(622)
 const core = __webpack_require__(470);
 const github = __webpack_require__(469);
+
 const inbuiltBumpScripts = {
-  goCobra: __webpack_require__(602),
   versionFile: __webpack_require__(188),
+  goCobra: __webpack_require__(602),
 }
+const defaultBumpScript = inbuiltBumpScripts.versionFile
 
 run().catch(error => { core.setFailed(error.message) })
 
@@ -573,7 +575,7 @@ function reFromGlobstring(glob) {
 
 async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName === "") {
-    bumpScriptName = 'singleVersionFile'
+    return defaultBumpScript(fileActions)
   }
 
   if (!inbuiltBumpScripts.hasOwnProperty(bumpScriptName)) {
@@ -660,7 +662,6 @@ function getRepoAccessor(octokit, repoArgs) {
   const accessor = {
     changes: {},
     cache: {},
-    fileActions: {},
   }
 
   const getFile = async (filePath) => {
@@ -677,9 +678,11 @@ function getRepoAccessor(octokit, repoArgs) {
       .then(data => accessor.cache[filePath] = data)
   }
 
-  accessor.fileActions.readFile = getFile
-  accessor.fileActions.fileExists = async (file) => (await getFile(file) !== null)
-  accessor.fileActions.writeFile = async (file, data) => { accessor.changes[file] = data }
+  accessor.fileActions = {
+    readFile: getFile,
+    fileExists: async (file) => (await getFile(file) !== null),
+    writeFile: async (file, data) => { accessor.changes[file] = data },
+  }
 
   return accessor
 }
@@ -2148,15 +2151,15 @@ module.exports = opts => {
 
 const versionFile = 'VERSION'
 
-module.exports = (fileExists, readFile, writeFile) => {
-  return (bumpType, component) => {
+module.exports = ({fileExists, readFile, writeFile}) => {
+  return async (bumpType, component) => {
     if (component !== "") {
       throw 'This bump script does not work with labels containing component names.'
     }
 
     let oldVersion
-    if (fileExists(versionFile)) {
-      oldVersion = readFile(versionFile)
+    if (await fileExists(versionFile)) {
+      oldVersion = await readFile(versionFile)
     } else {
       oldVersion = '0.0.0'
     }
@@ -2184,7 +2187,7 @@ module.exports = (fileExists, readFile, writeFile) => {
     }
 
     const newVersion = `${major}.${minor}.${patch}`
-    writeFile(versionFile, newVersion)
+    await writeFile(versionFile, newVersion)
     return newVersion
   }
 }

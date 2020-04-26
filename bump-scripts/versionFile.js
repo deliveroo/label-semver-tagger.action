@@ -6,15 +6,15 @@
 
 const versionFile = 'VERSION'
 
-module.exports = (fileExists, readFile, writeFile) => {
-  return (bumpType, component) => {
+module.exports = ({fileExists, readFile, writeFile}) => {
+  return async (bumpType, component) => {
     if (component !== "") {
       throw 'This bump script does not work with labels containing component names.'
     }
 
     let oldVersion
-    if (fileExists(versionFile)) {
-      oldVersion = readFile(versionFile)
+    if (await fileExists(versionFile)) {
+      oldVersion = await readFile(versionFile)
     } else {
       oldVersion = '0.0.0'
     }
@@ -42,7 +42,7 @@ module.exports = (fileExists, readFile, writeFile) => {
     }
 
     const newVersion = `${major}.${minor}.${patch}`
-    writeFile(versionFile, newVersion)
+    await writeFile(versionFile, newVersion)
     return newVersion
   }
 }

@@ -2,10 +2,12 @@ const fs = require('fs')
 const path = require('path')
 const core = require('@actions/core');
 const github = require('@actions/github');
+
 const inbuiltBumpScripts = {
-  goCobra: require('./bump-scripts/goCobra'),
   versionFile: require('./bump-scripts/versionFile'),
+  goCobra: require('./bump-scripts/goCobra'),
 }
+const defaultBumpScript = inbuiltBumpScripts.versionFile
 
 run().catch(error => { core.setFailed(error.message) })
 
@@ -75,7 +77,7 @@ function reFromGlobstring(glob) {
 
 async function findBumpScript(bumpScriptName, fileActions) {
   if (bumpScriptName === "") {
-    bumpScriptName = 'singleVersionFile'
+    return defaultBumpScript(fileActions)
   }
 
   if (!inbuiltBumpScripts.hasOwnProperty(bumpScriptName)) {
@@ -162,7 +164,6 @@ function getRepoAccessor(octokit, repoArgs) {
   const accessor = {
     changes: {},
     cache: {},
-    fileActions: {},
   }
 
   const getFile = async (filePath) => {
@@ -179,9 +180,11 @@ function getRepoAccessor(octokit, repoArgs) {
       .then(data => accessor.cache[filePath] = data)
   }
 
-  accessor.fileActions.readFile = getFile
-  accessor.fileActions.fileExists = async (file) => (await getFile(file) !== null)
-  accessor.fileActions.writeFile = async (file, data) => { accessor.changes[file] = data }
+  accessor.fileActions = {
+    readFile: getFile,
+    fileExists: async (file) => (await getFile(file) !== null),
+    writeFile: async (file, data) => { accessor.changes[file] = data },
+  }
 
   return accessor
 }
