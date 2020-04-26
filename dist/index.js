@@ -743,7 +743,7 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
   for (let component in versions) {
     let name = component
     if (component === "") {
-      name = 'whole repository'
+      name = '(whole repository)'
     }
 
     message += `- ${name}: ${versions[component]}\n`
