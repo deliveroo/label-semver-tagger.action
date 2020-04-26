@@ -507,7 +507,7 @@ const inbuiltBumpScripts = {
 }
 const defaultBumpScript = inbuiltBumpScripts.versionFile
 
-run().catch(error => { core.setFailed(`${error.message} (${error.lineNumber})`) })
+run().catch(error => { core.setFailed(error.message) })
 
 async function run() {
   const octokit = new github.GitHub(core.getInput('repo-token'))
