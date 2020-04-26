@@ -1,6 +1,6 @@
-# Label SenVer Tagger
+# Label SemVer Tagger
 
-This action is useful when PRs with labels containing semantic versioning information have been merged. It will bump the version data appropriately, commit those changes to your `master` branch, and tag them with the appropriate (optionally component-prefixed) git tag.
+This action is useful when PRs with labels containing [semantic versioning](https://semver.org/) information have been merged. It will bump the version data appropriately, commit those changes to your `master` branch, and tag them with the appropriate (optionally component-prefixed) git tag.
 
 The inputs for the action allow specifying how version information is stored in your repo, and what the tags should look like. The defaults are listed below in the example.
 
@@ -32,7 +32,7 @@ The name of one of the files in `bump-script`, scripts which define how the vers
 
 ### `bump-label-format`
 
-How the type of bump should be interpreted from the labels on merged PRs. The default, `${bumpType}`, will look for the labels named `major`, `minor` and `patch` to bump the repository's version appropriately. If you prefix or suffix those in your repo, you can add that here.
+How the type of bump should be interpreted from the labels on merged PRs. The default, `${bumpType}`, will look for the labels named `major`, `minor` and `patch` to bump the repository's version appropriately. If you prefix or suffix those in your repo, you can add that here. **You must make these labels**.
 
 ### `tag-format`
 
@@ -52,4 +52,4 @@ As above, when a component is bumped its likely you'll want that reflected in th
 
 ### `new-component-label`
 
-In a multi-component repo you may _add_ a component, and this action assists you by creating labels for your repo, and tagging with what ever version number you start with (ie. no increment) when it sees whatever label name you specify here. The default is `new component`.
+In a multi-component repo you may _add_ a component, and this action assists you by creating labels for your repo, and tagging with what ever version number you start with (ie. no increment) when it sees whatever label name you specify here. The default is `new component`. **You must make the tags for components which existed before you added this action.**
