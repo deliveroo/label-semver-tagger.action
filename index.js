@@ -256,13 +256,10 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
   const newSha = commit.data.sha
   core.debug(`New commit with version bumps: ${newSha}`)
 
-  const jobs = []
   for (const tag of tags) {
     core.debug(`Adding tag: ${tag}`)
-    const job = octokit.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: newSha})
-    jobs.push(job)
+    await octokit.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: newSha})
   }
-  await Promise.all(jobs).catch(console.error)
   core.debug('Tags added to commit, updaing master ref')
 
   return octokit.git.updateRef({owner, repo, ref: 'heads/master', sha: newSha})
