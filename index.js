@@ -262,7 +262,7 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
     const job = octokit.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: newSha})
     jobs.push(job)
   }
-  await Promise.all(jobs)
+  await Promise.all(jobs).catch(console.error)
   core.debug('Tags added to commit, updaing master ref')
 
   return octokit.git.updateRef({owner, repo, ref: 'heads/master', sha: newSha})
