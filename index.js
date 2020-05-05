@@ -238,29 +238,34 @@ async function gitCommitWithTags(octokit, prNumber, repoArgs, changedFiles, vers
 
   const { owner, repo, ref: baseRef } = repoArgs
 
-  const changeTree = await octokit.git.createTree({owner, repo, base_tree: baseRef, tree})
-  const treeSha = changeTree.data.sha
+  let shaToTag
+  if (tree.length === 0) {
+    shaToTag = baseRef
+  } else {  
+    const changeTree = await octokit.git.createTree({owner, repo, base_tree: baseRef, tree})
+    const treeSha = changeTree.data.sha
 
-  let message = `Bumping versions from #${prNumber}\n\nThese are the new version numbers:\n`
-  for (let component in versions) {
-    let name = component
-    if (component === "") {
-      name = '(whole repository)'
+    let message = `Bumping versions from #${prNumber}\n\nThese are the new version numbers:\n`
+    for (let component in versions) {
+      let name = component
+      if (component === "") {
+        name = '(whole repository)'
+      }
+
+      message += `- ${name}: ${versions[component]}\n`
     }
 
-    message += `- ${name}: ${versions[component]}\n`
+    core.debug(`Creating commit of tree (${treeSha}) atop master (${baseRef})`)
+    const commit = await octokit.git.createCommit({ owner, repo, message, tree: treeSha, parents: [baseRef]})
+    shaToTag = commit.data.sha
+    core.debug(`New commit with version bumps: ${shaToTag}`)
   }
-
-  core.debug(`Creating commit of tree (${treeSha}) atop master (${baseRef})`)
-  const commit = await octokit.git.createCommit({ owner, repo, message, tree: treeSha, parents: [baseRef]})
-  const newSha = commit.data.sha
-  core.debug(`New commit with version bumps: ${newSha}`)
 
   for (const tag of tags) {
     core.debug(`Adding tag: ${tag}`)
-    await octokit.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: newSha})
+    await octokit.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: shaToTag})
   }
   core.debug('Tags added to commit, updaing master ref')
 
-  return octokit.git.updateRef({owner, repo, ref: 'heads/master', sha: newSha})
+  return octokit.git.updateRef({owner, repo, ref: 'heads/master', sha: shaToTag})
 }
